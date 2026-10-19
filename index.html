@@ -124,6 +124,10 @@
   .banner { background: rgb(230 162 60 / .14); border: 1px solid rgb(230 162 60 / .4);
     border-radius: 12px; padding: 10px 12px; font-size: .82rem; margin-bottom: 12px; display: none; }
   .banner.show { display: block; }
+  .scan-opt { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; font-size: .82rem;
+    color: rgb(var(--muted)); cursor: pointer; line-height: 1.35; }
+  .scan-opt input { margin: 2px 0 0 0; width: 16px; height: 16px; flex: none; accent-color: var(--accent); }
+  .scan-hint { margin-top: 8px; font-size: .74rem; color: rgb(var(--muted)); opacity: .85; line-height: 1.4; }
 </style>
 </head>
 <body>
@@ -170,6 +174,13 @@
       <div class="info-meta-row"><span class="info-meta-label">Chip temp</span><span class="info-meta-value" id="vTemp">—</span></div>
     </div>
     <button class="lts-btn full" id="btnConnect">Connect Respooler</button>
+    <label class="scan-opt">
+      <input type="checkbox" id="acceptAll">
+      <span>显示所有蓝牙设备（搜不到时勾选：跳过服务 UUID 筛选）</span>
+    </label>
+    <div class="scan-hint">
+      安卓需授予 Chrome「附近的设备」权限；设备端需处于可被搜索状态，且未被手机 App 占用连接。
+    </div>
   </div>
 
   <div class="card">
@@ -347,10 +358,12 @@ const ble = {
     if (this.connecting) return;
     this.connecting = true;
     try {
-      const device = await navigator.bluetooth.requestDevice({
-        filters: [{ services: [SERVICE] }],
-        optionalServices: [SERVICE]
-      });
+      const acceptAll = $("acceptAll") && $("acceptAll").checked;
+      const requestOptions = acceptAll
+        ? { acceptAllDevices: true, optionalServices: [SERVICE] }
+        : { filters: [{ services: [SERVICE] }], optionalServices: [SERVICE] };
+      logLine(acceptAll ? "设备筛选：关闭（列出全部 BLE 设备）" : "设备筛选：仅显示广播目标 Service 的设备");
+      const device = await navigator.bluetooth.requestDevice(requestOptions);
       this.device = device;
       device.addEventListener("gattserverdisconnected", () => {
         this.connected = false;
@@ -371,6 +384,9 @@ const ble = {
           break;
         } catch (e) {
           lastErr = e;
+          if (e && e.name === "NotFoundError") {
+            throw new Error("该设备不提供目标 BLE 服务（UUID 不匹配）。可能选错了设备，或机型/固件版本不同。");
+          }
           logLine(`第 ${attempt} 次失败：${e.message}`, "err");
           if (attempt < 3) await new Promise(r => setTimeout(r, 600 * attempt));
         }
