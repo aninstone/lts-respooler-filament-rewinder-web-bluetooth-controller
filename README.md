@@ -6,6 +6,20 @@ LTS Respooler（3D 打印线材回卷/绕线机）的 Web 版蓝牙控制台。�
 
 ---
 
+## 在线使用（手机直接开）
+
+**https://aninstone.github.io/lts-respooler-filament-rewinder-web-bluetooth-controller/**
+
+GitHub Pages 提供 HTTPS，天然满足 Web Bluetooth 的安全上下文要求，手机上不用装任何东西：
+
+1. 手机用 **Chrome**（安卓）打开上面的地址
+2. 点 **Connect Respooler**，在系统弹窗里选设备
+3. 连上即可控制
+
+> iOS 的 Safari / Chrome 均不支持 Web Bluetooth，iPhone 只能用官方 App。安卓 Chrome 可用。
+
+---
+
 ## 快速开始
 
 Web Bluetooth 有硬性前提，先确认环境：
